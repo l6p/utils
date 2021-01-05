@@ -32,6 +32,22 @@ func TestGet1(t *testing.T) {
 	assert.Equal(t, D(Json).GetString("f4.f42[0]"), "v3")
 }
 
+func TestGet2(t *testing.T) {
+	d1 := D(Json).GetData("f4")
+	assert.Equal(t, d1.GetString("f41"), "v2")
+
+	d2 := D(Json).GetData("f4.f42")
+	assert.Equal(t, d2.GetString("[2]"), "v5")
+
+	d3 := d1.GetData("f41")
+	assert.Equal(t, d3.GetString(""), "v2")
+}
+
+func TestLoad(t *testing.T) {
+	data := Load("data_test.json")
+	assert.Equal(t, data.GetInt("f4.f43[1].f432"), 60)
+}
+
 func TestSet1(t *testing.T) {
 	const Expected = `
 	{
@@ -176,6 +192,22 @@ func TestDelete2(t *testing.T) {
 	`
 	value := D(Json).Delete("f3").Delete("f4").Delete("f5").GetJson("")
 	assertEqual(t, Expected, value)
+}
+
+func TestMarshal(t *testing.T) {
+	data := D(Json)
+
+	serializedBytes, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+
+	var data2 *Data
+	if err := json.Unmarshal(serializedBytes, &data2); err != nil {
+		panic(err)
+	}
+
+	assertEqual(t, data.GetJson(""), data2.GetJson(""))
 }
 
 func assertEqual(t *testing.T, expected string, actual string) {

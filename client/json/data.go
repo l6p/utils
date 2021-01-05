@@ -3,6 +3,7 @@ package json
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -130,6 +131,19 @@ func D(json string) *Data {
 	return &data
 }
 
+func Load(path string) *Data {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return D(string(data))
+}
+
+func (d *Data) GetData(key string) *Data {
+	jsonObj := d.value(key).Get()
+	return &Data{jsonObj: &jsonObj}
+}
+
 func (d *Data) GetJson(key string) string {
 	bytes, err := json.Marshal(d.value(key).Get())
 	if err != nil {
@@ -214,6 +228,19 @@ func (d *Data) Merge(key string, json string) *Data {
 func (d *Data) Delete(key string) *Data {
 	d.value(key).Delete()
 	return d
+}
+
+func (d *Data) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.value("").Get())
+}
+
+func (d *Data) UnmarshalJSON(data []byte) error {
+	var obj interface{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+	d.jsonObj = &obj
+	return nil
 }
 
 func (d *Data) value(key string) *Value {
